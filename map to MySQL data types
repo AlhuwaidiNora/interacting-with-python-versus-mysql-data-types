@@ -1,0 +1,95 @@
+import mysql.connector
+from mysql.connector import errorcode
+
+# Database credentials
+HOST = "localhost"
+USER = "root"
+PASSWORD = "root"
+DATABASE = "datatype_db"
+
+def create_connection():
+    try:
+        connection = mysql.connector.connect(
+            host=HOST,
+            user=USER,
+            passwd=PASSWORD
+        )
+        print("Connection to MySQL server established.")
+        return connection
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return None
+
+def create_database(connection):
+    cursor = connection.cursor()
+    try:
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DATABASE}")
+        print(f"Database '{DATABASE}' created or already exists.")
+    except mysql.connector.Error as err:
+        print(f"Failed to create database: {err}")
+    finally:
+        cursor.close()
+
+def create_table(connection):
+    cursor = connection.cursor()
+    try:
+        cursor.execute(f"USE {DATABASE}")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS datatype_table (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                int_column INT,
+                float_column FLOAT,
+                char_column CHAR(10),
+                varchar_column VARCHAR(255),
+                text_column TEXT,
+                date_column DATE,
+                datetime_column DATETIME,
+                boolean_column BOOLEAN
+            )
+        """)
+        print("Table 'datatype_table' created or already exists.")
+    except mysql.connector.Error as err:
+        print(f"Failed to create table: {err}")
+    finally:
+        cursor.close()
+
+def insert_data(connection):
+    cursor = connection.cursor()
+    try:
+        cursor.execute(f"USE {DATABASE}")
+        cursor.execute("""
+            INSERT INTO datatype_table (int_column, float_column, char_column, varchar_column, text_column, date_column, datetime_column, boolean_column)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (42, 3.14, 'A', 'Hello, World!', 'This is a text column', '2024-07-08', '2024-07-08 12:34:56', True))
+        connection.commit()
+        print("Data inserted into 'datatype_table' table.")
+    except mysql.connector.Error as err:
+        print(f"Failed to insert data: {err}")
+        connection.rollback()
+    finally:
+        cursor.close()
+
+def retrieve_data(connection):
+    cursor = connection.cursor()
+    try:
+        cursor.execute(f"USE {DATABASE}")
+        cursor.execute("SELECT * FROM datatype_table")
+        rows = cursor.fetchall()
+        for row in rows:
+            print(row)
+    except mysql.connector.Error as err:
+        print(f"Failed to retrieve data: {err}")
+    finally:
+        cursor.close()
+
+def main():
+    connection = create_connection()
+    if connection:
+        create_database(connection)
+        create_table(connection)
+        insert_data(connection)
+        retrieve_data(connection)
+        connection.close()
+
+if __name__ == "__main__":
+    main()
